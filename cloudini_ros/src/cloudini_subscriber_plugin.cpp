@@ -28,6 +28,16 @@ CloudiniSubscriber::CloudiniSubscriber() : decoder_(std::make_shared<Cloudini::P
 
 CloudiniSubscriber::DecodeResult CloudiniSubscriber::decodeTyped(
     const point_cloud_interfaces::msg::CompressedPointCloud2& msg) const {
+  // the encoder writes no header for an empty cloud (see convertPointCloud2ToCompressedCloud)
+  if (msg.compressed_data.empty()) {
+    auto result = std::make_shared<sensor_msgs::msg::PointCloud2>();
+    result->header = msg.header;
+    result->fields = msg.fields;
+    result->point_step = msg.point_step;
+    result->is_dense = msg.is_dense;
+    return result;
+  }
+
   Cloudini::ConstBufferView input(msg.compressed_data.data(), msg.compressed_data.size());
   auto info = Cloudini::DecodeHeader(input);
 
